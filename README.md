@@ -1,6 +1,15 @@
-# L2 Wizard - MCP Agent with Fun Tools 🎉
+# L2 Wizard - AI Agent Evolution 🎉
 
-An AI agent system built with the Model Context Protocol (MCP) that connects to multiple fun APIs to help plan activities, get information, and entertain you.
+A multi-level AI agent project showcasing the evolution from MCP-based local agents (Level 2) to production-ready Claude SDK agents (Level 3).
+
+## 📚 Project Evolution
+
+This repository contains **two implementations** of the same agent capabilities:
+
+- **Level 2**: Original MCP-based agent using Ollama/Mistral (local)
+- **Level 3**: Refactored Claude SDK agent (production-ready)
+
+Both provide the same five tools: weather, books, jokes, dogs, and trivia.
 
 ## 🚀 Features
 
@@ -10,18 +19,72 @@ An AI agent system built with the Model Context Protocol (MCP) that connects to 
 - **Dog Pictures** - Random cute dog images from Dog CEO API
 - **Trivia Questions** - Multiple-choice trivia from Open Trivia Database
 
+## 📊 Level 2 vs Level 3 Comparison
+
+| Feature | Level 2 (MCP) | Level 3 (SDK) |
+|---------|---------------|---------------|
+| **LLM** | Ollama (local mistral:7b) | Claude API (hosted) |
+| **Architecture** | MCP stdio server + client | Direct API integration |
+| **Tool Calling** | Custom MCP protocol | Native Claude tools |
+| **Reliability** | Experimental (ReAct struggles) | Production-ready |
+| **Setup** | Ollama + Python dependencies | Python + API key |
+| **Cost** | Free (local) | Paid (Claude API) |
+| **Performance** | Slow, limited reasoning | Fast, strong reasoning |
+| **Maintenance** | Multiple processes | Single process |
+| **Testing** | Basic tool tests | Comprehensive test harness |
+
+**Recommendation**: Use **Level 3** for production. Use **Level 2** for learning MCP or offline development.
+
 ## 📁 Project Structure
 
 ```
 l2-wizard/
-├── server_fun.py      # MCP server with 5 tool implementations
-├── agent_fun.py       # ReAct-style agent (experimental, slower)
-├── agent_simple.py    # Simple orchestrator (recommended, fast)
-├── test_all_tools.py  # Tool testing script
+├── Level-3/           # 🆕 SDK-based agent (production-ready)
+│   ├── agent.py           # Main Claude SDK agent
+│   ├── tools.py           # Structured tool definitions
+│   ├── config.py          # Configuration management
+│   ├── test_agent.py      # Test harness
+│   ├── setup.py           # Automated setup
+│   ├── requirements.txt   # Dependencies
+│   └── README.md          # Level 3 documentation
+├── server_fun.py      # Level 2: MCP server with 5 tools
+├── agent_fun.py       # Level 2: ReAct-style agent (experimental)
+├── agent_simple.py    # Level 2: Simple orchestrator (recommended)
+├── test_all_tools.py  # Level 2: Tool testing script
 └── README.md          # This file
 ```
 
+## 🛠️ Quick Start
+
+### Level 3 (Recommended - Production Ready)
+
+```bash
+cd Level-3
+python setup.py
+$env:ANTHROPIC_API_KEY='your-key-here'  # Windows PowerShell
+python agent.py
+```
+
+📖 **See [Level-3/README.md](Level-3/README.md) for complete documentation**
+
+### Level 2 (Learning/Offline)
+
+```bash
+# Install Ollama and pull model
+ollama pull mistral:7b
+
+# Install dependencies
+pip install mcp fastmcp ollama requests
+
+# Run agent
+python agent_simple.py
+```
+
+---
+
 ## 🛠️ Setup
+
+### Level 2 Setup (MCP + Ollama)
 
 ### Prerequisites
 
@@ -54,7 +117,7 @@ l2-wizard/
    ollama pull mistral:7b
    ```
 
-## 🎮 Usage
+## 🎮 Usage (Level 2)
 
 ### Option 1: Simple Agent (Recommended)
 
@@ -190,19 +253,56 @@ This is a known limitation of `mistral:7b` with the ReAct pattern. Use `agent_si
 
 ## 🚧 Known Limitations
 
+### Level 2
 1. **ReAct Agent**: `mistral:7b` struggles with multi-step tool calling
 2. **Coordinates**: Weather requires manual coordinate input
 3. **Book Search**: Limited to Google Books availability
 4. **Rate Limits**: External APIs may have rate limits
+5. **Local Model**: Requires Ollama installation
+
+### Level 3
+1. **API Cost**: Requires paid Anthropic API key
+2. **Coordinates**: Weather still requires lat/long (no city→coords conversion)
+3. **No Persistence**: Each run is independent (no memory between sessions)
+
+## 🔄 Migration from Level 2 to Level 3
+
+To understand the migration process and architecture changes:
+
+1. **Read the comparison**: See `Level-3/README.md` for detailed differences
+2. **Review architecture**: Compare `agent_simple.py` vs `Level-3/agent.py`
+3. **Tool structure**: Compare `server_fun.py` vs `Level-3/tools.py`
+4. **Run tests**: `python Level-3/test_agent.py` validates all scenarios
+
+**Key Changes:**
+- MCP server → Direct API calls
+- Custom tool protocol → Claude native tools
+- Ollama → Claude API
+- Regex parsing → AI-driven tool selection
+- Single script → Modular architecture
+
+See [Level-3/README.md](Level-3/README.md) for complete migration guide.
 
 ## 🔮 Future Improvements
 
+### Level 2
 - [ ] Add city name → coordinates conversion
 - [ ] Implement caching for repeated tool calls
-- [ ] Add more tools (news, restaurants, movies)
-- [ ] Better LLM model support (GPT-4, Claude)
-- [ ] Web UI interface
+- [ ] Better LLM model support (llama3.1:8b)
 - [ ] Async parallel tool execution
+
+### Level 3
+- [ ] Streaming responses for real-time output
+- [ ] Memory/context persistence across sessions
+- [ ] City → coordinates geocoding
+- [ ] Web UI interface (Gradio/Streamlit)
+- [ ] Structured logging and metrics
+- [ ] Result caching layer
+
+### Both
+- [ ] Add more tools (news, restaurants, movies)
+- [ ] Enhanced error handling
+- [ ] Multi-language support
 
 ## 📄 License
 
