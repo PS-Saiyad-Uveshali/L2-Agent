@@ -13,23 +13,26 @@ This is the **Level 3 implementation** of the L2 Wizard agent, refactored to use
 - **Less Reliable**: ReAct agent (`agent_fun.py`) was experimental and slow
 
 ### Level 3 Improvements
-- ✅ **Production API**: Uses Claude's hosted API (reliable, fast)
-- ✅ **Structured Tools**: Native Claude tool calling (deterministic, well-tested)
+- ✅ **Production API**: Uses LiteLLM proxy with DeepInfra (reliable, fast)
+- ✅ **Structured Tools**: OpenAI-compatible tool calling (deterministic, well-tested)
 - ✅ **Clean Architecture**: Separated concerns (tools, config, agent logic)
-- ✅ **Better Reasoning**: Claude Sonnet 4.5 handles complex multi-tool scenarios
+- ✅ **Better Reasoning**: Qwen models handle complex multi-tool scenarios
 - ✅ **Maintainable**: Clear agent loop, no custom protocols
 - ✅ **Testable**: Included test harness with multiple scenarios
+- ✅ **Streaming Support**: Real-time response streaming
+- ✅ **Web Interface**: Beautiful Gradio UI for easy interaction
 
 ## Project Structure
 
 ```
 Level-3/
-├── agent.py           # Main SDK-based agent with clean loop pattern
+├── agent.py           # Main agent with streaming support
+├── web_app.py         # Gradio web interface
 ├── tools.py          # Structured tool definitions and registry
 ├── config.py         # Configuration management
 ├── test_agent.py     # Test harness with 5 scenarios
 ├── setup.py          # Automated setup script
-├── requirements.txt  # Python dependencies
+├── requirements.txt  # Python dependencies (includes gradio)
 ├── .env.example      # Environment variable template
 └── README.md         # This file
 ```
@@ -62,7 +65,7 @@ Level-3/
 
 ### Prerequisites
 - Python 3.9+
-- Anthropic API key ([Get one here](https://console.anthropic.com/))
+- DeepInfra API key (or LiteLLM-compatible API access)
 
 ### Automated Setup
 
@@ -92,13 +95,33 @@ source .venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 
 # Set API key
-$env:ANTHROPIC_API_KEY='your-key'  # Windows PowerShell
-export ANTHROPIC_API_KEY='your-key'  # Linux/Mac
+$env:DEEPINFRA_API_KEY='your-key'  # Windows PowerShell
+export DEEPINFRA_API_KEY='your-key'  # Linux/Mac
+# Or add to .env file
 ```
 
 ## Running the Agent
 
-### Interactive Mode
+### Option 1: Web Interface (Recommended)
+```bash
+python web_app.py
+```
+
+This launches a beautiful Gradio web interface at `http://localhost:7860` with:
+- 🎨 Clean, modern UI
+- ⚡ Real-time streaming responses
+- 📋 Example queries
+- 💬 Chat history
+- 🔧 Easy configuration
+
+**Command-line options:**
+```bash
+python web_app.py --port 8080          # Custom port
+python web_app.py --share              # Create shareable public link
+python web_app.py --host 127.0.0.1     # Custom host
+```
+
+### Option 2: Command-Line Interface
 ```bash
 python agent.py
 ```
@@ -132,13 +155,24 @@ Example session:
   Answers: A) 1943  B) 1945  C) 1947  D) 1950
 ```
 
-### Programmatic Use
-```python
-from agent import ClaudeAgent
+### Option 3: Programmatic Use
 
-agent = ClaudeAgent(api_key="your-key", verbose=True)
-response = agent.run("Tell me a joke and show a dog pic")
+**Non-streaming:**
+```python
+from agent import LiteLLMAgent
+
+agent = LiteLLMAgent(verbose=True)
+response = agent.run("Tell me a joke and show a dog pic", stream=False)
 print(response)
+```
+
+**Streaming (real-time):**
+```python
+from agent import LiteLLMAgent
+
+agent = LiteLLMAgent(verbose=False)
+for chunk in agent.run("What's the weather in Paris?", stream=True):
+    print(chunk, end="", flush=True)
 ```
 
 ## Running Tests
@@ -183,20 +217,22 @@ Success Rate: 100.0%
 
 | Aspect | Level 2 | Level 3 |
 |--------|---------|---------|
-| **LLM** | Ollama (local mistral:7b) | Claude API (hosted) |
+| **LLM** | Ollama (local mistral:7b) | LiteLLM + DeepInfra (Qwen) |
 | **Protocol** | MCP (stdio server) | Direct API calls |
-| **Tool Calling** | Custom MCP tools | Native Claude tools |
+| **Tool Calling** | Custom MCP tools | OpenAI-compatible tools |
 | **Agent Pattern** | ReAct (unreliable) + Simple | Clean SDK loop |
 | **Architecture** | Monolithic scripts | Separated concerns |
 | **Configuration** | Hardcoded | Centralized config |
 | **Testing** | Manual `test_all_tools.py` | Structured test harness |
-| **Dependencies** | mcp, fastmcp, ollama | anthropic, requests |
+| **Dependencies** | mcp, fastmcp, ollama | openai, litellm, gradio |
+| **Streaming** | ❌ No | ✅ Yes |
+| **Web UI** | ❌ No | ✅ Gradio interface |
 
 ## Tool Permissions
 
 All tools connect to **public, free APIs**:
 - ✅ No authentication required
-- ✅ No API keys needed (except Anthropic for agent)
+- ✅ No API keys needed (except DeepInfra for LLM)
 - ✅ Rate limits exist but are generous
 - ✅ All tools are read-only
 
@@ -211,12 +247,13 @@ All tools connect to **public, free APIs**:
 
 ## Known Limitations
 
-1. **API Key Required**: Must have Anthropic API key (not free)
+1. **API Key Required**: Must have DeepInfra/LiteLLM API key
 2. **Internet Required**: All tools need external API access
 3. **Coordinates Manual**: Weather requires lat/long (no city→coords conversion)
-4. **No State Persistence**: Each run is independent (no memory)
+4. **No State Persistence**: Each run is independent (no memory between sessions)
 5. **Rate Limits**: External APIs may throttle heavy usage
 6. **English Only**: Book search and trivia are English-centric
+7. **Model Specific**: Function calling quality depends on model (Qwen works well)
 
 ## Context Management
 
@@ -261,9 +298,12 @@ cd Level-3
 source .venv/bin/activate  # Linux/Mac
 
 # Set API key
-export ANTHROPIC_API_KEY='your-key'
+export DEEPINFRA_API_KEY='your-key'
 
-# Run agent
+# Run web interface
+python web_app.py
+
+# Or run CLI
 python agent.py
 
 # Run tests
@@ -288,10 +328,12 @@ Key SDK concepts:
 
 ## Troubleshooting
 
-### "ANTHROPIC_API_KEY is required"
+### "DEEPINFRA_API_KEY is required"
 ```powershell
 # Set the environment variable
-$env:ANTHROPIC_API_KEY='your-key-here'
+$env:DEEPINFRA_API_KEY='your-key-here'
+# Or add to .env file:
+# DEEPINFRA_API_KEY=your-key-here
 ```
 
 ### "Module not found"
@@ -303,9 +345,18 @@ pip install -r requirements.txt
 ```
 
 ### API Rate Limits
-- Claude API has usage limits
-- Consider implementing exponential backoff
-- Monitor your usage at console.anthropic.com
+- LiteLLM/DeepInfra have usage limits
+- The agent handles errors gracefully
+- Monitor usage via your LiteLLM dashboard
+
+### Web Interface Not Loading
+```bash
+# Install gradio if missing
+pip install gradio>=4.0.0
+
+# Check if port is already in use
+python web_app.py --port 8080
+```
 
 ### Tool Failures
 - Check internet connection
@@ -314,14 +365,17 @@ pip install -r requirements.txt
 
 ## Future Enhancements
 
-- [ ] **Streaming responses** - Real-time output
-- [ ] **Memory/context** - Store conversation history
-- [ ] **Async tools** - Parallel execution
+- [x] **Streaming responses** - ✅ Implemented with real-time output
+- [x] **Web interface** - ✅ Implemented with Gradio
+- [ ] **Memory/context** - Store conversation history across sessions
+- [ ] **Async tools** - Parallel execution for faster responses
 - [ ] **City→coords** - Geocoding API integration
-- [ ] **Web interface** - Gradio or Streamlit UI
+- [ ] **Voice input** - Speech-to-text for web UI
+- [ ] **Export chat** - Download conversation history
 - [ ] **Logging** - Structured logging to files
 - [ ] **Metrics** - Track tool usage, latency
 - [ ] **Caching** - Avoid redundant API calls
+- [ ] **Multi-language** - Support for non-English queries
 
 ## License
 
@@ -333,4 +387,13 @@ See main repository README.
 
 ---
 
-Built with [Claude API](https://www.anthropic.com/claude) by Anthropic
+## Screenshots
+
+### Web Interface
+![Gradio Interface](https://via.placeholder.com/800x450?text=Gradio+Web+Interface)
+
+*The web interface provides a modern, user-friendly way to interact with the agent.*
+
+---
+
+Built with [LiteLLM](https://litellm.ai/) + [DeepInfra](https://deepinfra.com/) + [Gradio](https://gradio.app/)
